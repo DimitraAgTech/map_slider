@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Colorado Map Swipe Comparison</title>
+
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        background: black;
+        overflow: hidden;
+        user-select: none;
+    }
+
+    #map-container {
+        position: relative;
+        width: 0;
+        height: 0;
+    }
+
+    .map-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        image-rendering: auto;
+        pointer-events: none;
+    }
+
+    #overlay-mask {
+        position: absolute;
+        top: 0;
+        left: 0;
+        overflow: hidden;
+        height: 100%;
+    }
+
+    #slider {
+        position: absolute;
+        top: 0;
+        width: 6px;
+        height: 100%;
+        margin-left: -3px;
+        background: rgba(255,255,255,0.8);
+        cursor: ew-resize;
+        transition: background 0.15s, box-shadow 0.15s;
+    }
+
+    #slider:hover {
+        background: rgba(255,255,255,1);
+        box-shadow: 0 0 10px rgba(255,255,255,0.9);
+    }
+</style>
+</head>
+
+<body>
+
+<div id="map-container">
+    <img id="underlay" class="map-image" src="underlay.png">
+    <div id="overlay-mask">
+        <img id="overlay" class="map-image" src="overlay.png">
+    </div>
+    <div id="slider"></div>
+</div>
+
+<script>
+    const container = document.getElementById("map-container");
+    const overlayMask = document.getElementById("overlay-mask");
+    const slider = document.getElementById("slider");
+    const underlay = document.getElementById("underlay");
+    const overlay = document.getElementById("overlay");
+
+    let dragging = false;
+    let mapWidth = 0;
+    let mapHeight = 0;
+
+    function setSlider(x) {
+        x = Math.max(0, Math.min(mapWidth, x));
+        overlayMask.style.width = x + "px";
+        slider.style.left = x + "px";
+    }
+
+    function init() {
+        mapWidth = underlay.naturalWidth;
+        mapHeight = underlay.naturalHeight;
+
+        container.style.width = mapWidth + "px";
+        container.style.height = mapHeight + "px";
+
+        underlay.style.width = mapWidth + "px";
+        underlay.style.height = mapHeight + "px";
+
+        overlay.style.width = mapWidth + "px";
+        overlay.style.height = mapHeight + "px";
+
+        overlayMask.style.height = mapHeight + "px";
+
+        // Center map in viewport
+        container.style.left = "50%";
+        container.style.top = "50%";
+        container.style.transform = "translate(-50%, -50%)";
+        container.style.position = "absolute";
+
+        setSlider(mapWidth / 2);
+    }
+
+    slider.addEventListener("mousedown", () => dragging = true);
+    window.addEventListener("mouseup", () => dragging = false);
+
+    window.addEventListener("mousemove", (e) => {
+        if (!dragging) return;
+        const rect = container.getBoundingClientRect();
+        setSlider(e.clientX - rect.left);
+    });
+
+    // Wait for images to load so we can lock pixel size
+    let loaded = 0;
+    [underlay, overlay].forEach(img => {
+        img.onload = () => {
+            loaded++;
+            if (loaded === 2) init();
+        };
+    });
+</script>
+
+</body>
+</html>
